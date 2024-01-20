@@ -1,6 +1,7 @@
 import torch
 from created_models.simple_cnn_model import SimpleCNN
 from utils.data_loader import get_data_loaders
+import os
 
 
 def evaluate(model, test_loader):
@@ -19,6 +20,10 @@ def evaluate(model, test_loader):
 
 if __name__ == "__main__":
     model = SimpleCNN()
-    model.load_state_dict(torch.load('simple_cnn_model.pth'))
+
+    model_name = model.__class__.__name__
+    save_directory = './trained_models'
+
+    model.load_state_dict(torch.load(os.path.join(save_directory, f"{model_name}_model.pth")))
     _, test_loader = get_data_loaders()
     evaluate(model, test_loader)
