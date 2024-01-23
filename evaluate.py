@@ -2,24 +2,44 @@ import torch
 from created_models.simple_cnn_model import SimpleCNN
 from utils.data_loader import get_data_loaders
 import os
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from torch.utils.tensorboard import SummaryWriter
 
 
 def evaluate(model, test_loader):
-    correct = 0
-    total = 0
+    model.eval()
+    y_true = []
+    y_pred = []
+
     with torch.no_grad():
         for data in test_loader:
             images, labels = data
             outputs = model(images)
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
 
-    accuracy = 100 * correct / total
-    print('Accuracy of the network on the test images: {:.2f}%'.format(accuracy))
+            y_true.extend(labels.numpy())
+            y_pred.extend(predicted.numpy())
+
+    accuracy = accuracy_score(y_true, y_pred)
+    precision = precision_score(y_true, y_pred, average='weighted')
+    recall = recall_score(y_true, y_pred, average='weighted')
+    f1 = f1_score(y_true, y_pred, average='weighted')
+
+    print('Accuracy: {:.2f}%'.format(accuracy * 100))
+    print('Precision: {:.2f}'.format(precision))
+    print('Recall: {:.2f}'.format(recall))
+    print('F1 Score: {:.2f}'.format(f1))
 
 if __name__ == "__main__":
     model = SimpleCNN()
+
+    # Create a SummaryWriter to use TensorBoard
+    writer = SummaryWriter('logs')
+    # Add the model graph to TensorBoard
+    dummy_input = torch.randn(1, 3, 32, 32)
+    writer.add_graph(model, dummy_input)
+    # Close the SummaryWriter
+    writer.close()
 
     model_name = model.__class__.__name__
     save_directory = './trained_models'
