@@ -1,10 +1,10 @@
 import os
 import torch
 import torch.optim as optim
-from created_models.simple_cnn_model import SimpleCNN
-from utils.data_loader import get_data_loaders
-from tqdm import tqdm
 import matplotlib.pyplot as plt
+from tqdm import tqdm
+from created_models.simple_cnn_model import SimpleCNN, SimpleCNN_v2, ImprovedCNN
+from utils.data_loader import get_data_loaders
 
 
 def plot_and_save_training_results(epochs, train_accuracies, train_losses, model_name, num_epochs):
@@ -31,8 +31,8 @@ def train(model, train_loader, num_epochs=5):
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
-    train_accuracies = []  # List to store training accuracies for each epoch
-    train_losses = []  # List to store training losses for each epoch
+    train_accuracies = []
+    train_losses = []
 
     # we iterate for the specified number of epochs
     for epoch in tqdm(range(num_epochs), desc="Epochs", unit="epoch"):
@@ -79,6 +79,8 @@ def train(model, train_loader, num_epochs=5):
 
 if __name__ == "__main__":
     model = SimpleCNN()
+    # model = SimpleCNN_v2()
+    # model = ImprovedCNN()
 
     train_loader, _ = get_data_loaders()
     train(model, train_loader, num_epochs=10)
