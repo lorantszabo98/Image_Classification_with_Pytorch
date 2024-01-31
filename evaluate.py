@@ -30,13 +30,17 @@ def evaluate(model, test_loader):
     print('Recall: {:.2f}'.format(recall))
     print('F1 Score: {:.2f}'.format(f1))
 
+    # print out the number of parameters
+    total_params = sum(p.numel() for p in model.parameters())
+    print(f"Total number of parameters: {total_params}")
+
     # print out the model structure
     # print(model.eval())
 
 if __name__ == "__main__":
-    model = SimpleCNN()
+    # model = SimpleCNN()
     # model = SimpleCNN_v2()
-    # model = ImprovedCNN()
+    model = ImprovedCNN()
 
     # Create a SummaryWriter to use TensorBoard
     writer = SummaryWriter('logs')

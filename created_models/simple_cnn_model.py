@@ -13,6 +13,7 @@ class SimpleCNN(nn.Module):
         x = self.pool(self.relu(self.conv1(x)))
         x = x.view(-1, 32 * 16 * 16)
         x = self.fc1(x)
+
         return x
 
 
@@ -68,6 +69,7 @@ class ImprovedCNN(nn.Module):
         x = x.view(-1, 256 * 4 * 4)
         x = self.dropout(self.relu4(self.fc1(x)))
         x = self.fc2(x)
+
         return x
 
 
