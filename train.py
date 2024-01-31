@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from created_models.simple_cnn_model import SimpleCNN, SimpleCNN_v2, ImprovedCNN
 from utils.data_loader import get_data_loaders
+import torchvision.models as models
 
 
 def plot_and_save_training_results(epochs, train_accuracies, train_losses, model_name, num_epochs):
@@ -78,9 +79,10 @@ def train(model, train_loader, num_epochs=5):
     plot_and_save_training_results(range(1, num_epochs + 1), train_accuracies, train_losses, model_name, num_epochs)
 
 if __name__ == "__main__":
-    model = SimpleCNN()
+    # model = SimpleCNN()
     # model = SimpleCNN_v2()
     # model = ImprovedCNN()
+    model = models.resnet18()
 
     train_loader, _ = get_data_loaders()
     train(model, train_loader, num_epochs=10)

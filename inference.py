@@ -1,5 +1,6 @@
 import torch
 import time
+import torchvision.models as models
 from torchvision import transforms
 from PIL import Image
 from created_models.simple_cnn_model import SimpleCNN, SimpleCNN_v2, ImprovedCNN
@@ -46,7 +47,8 @@ if __name__ == "__main__":
     # Init the model
     # model = SimpleCNN()
     # model = SimpleCNN_v2()
-    model = ImprovedCNN()
+    # model = ImprovedCNN()
+    model = models.resnet18()
 
     # class labels for the CIFAR-10 dataset
     class_labels = [
@@ -55,7 +57,7 @@ if __name__ == "__main__":
     ]
 
     # Specify the path to the test image
-    image_path = 'test_images/airplane_001.jpg'
+    image_path = 'test_images/automoible_002.jpg'
 
     start_time = time.time()
     predicted_label, probabilities_percentage = inference(model, image_path, class_labels)

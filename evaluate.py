@@ -1,9 +1,11 @@
 import torch
 import os
+import torchvision.models as models
 from created_models.simple_cnn_model import SimpleCNN, SimpleCNN_v2, ImprovedCNN
 from utils.data_loader import get_data_loaders
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from torch.utils.tensorboard import SummaryWriter
+
 
 
 def evaluate(model, test_loader):
@@ -40,7 +42,9 @@ def evaluate(model, test_loader):
 if __name__ == "__main__":
     # model = SimpleCNN()
     # model = SimpleCNN_v2()
-    model = ImprovedCNN()
+    # model = ImprovedCNN()
+    model = models.resnet18()
+
 
     # Create a SummaryWriter to use TensorBoard
     writer = SummaryWriter('logs')
