@@ -9,13 +9,13 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from torch.utils.tensorboard import SummaryWriter
 
 
-def evaluate(model, test_loader, feature_extractor=False):
+def evaluate(model, test_loader, mode='default'):
 
-    if feature_extractor:
+    if mode == "feature_extractor" or mode == "fine_tuning":
         num_ftrs = model.fc.in_features
         model.fc = nn.Linear(num_ftrs, 10)
 
-        load_model('./trained_models', model, feature_extractor_mode=True)
+        load_model('./trained_models', model, mode=mode)
     else:
         load_model('./trained_models', model)
     model.eval()
@@ -35,6 +35,8 @@ def evaluate(model, test_loader, feature_extractor=False):
     precision = precision_score(y_true, y_pred, average='weighted')
     recall = recall_score(y_true, y_pred, average='weighted')
     f1 = f1_score(y_true, y_pred, average='weighted')
+
+    print("Evaluation metrics:\n")
 
     print('Accuracy: {:.2f}%'.format(accuracy * 100))
     print('Precision: {:.2f}'.format(precision))
@@ -63,5 +65,5 @@ if __name__ == "__main__":
     writer.flush()
     writer.close()
 
-    _, test_loader = get_data_loaders()
-    evaluate(model, test_loader, feature_extractor=False)
+    _, test_loader = get_data_loaders(statistics=False)
+    evaluate(model, test_loader, mode="fine_tuning")
