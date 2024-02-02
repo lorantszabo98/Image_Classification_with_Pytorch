@@ -1,14 +1,23 @@
 import torch
 import os
 import torchvision.models as models
+from torch import nn
 from created_models.simple_cnn_model import SimpleCNN, SimpleCNN_v2, ImprovedCNN
 from utils.data_loader import get_data_loaders
+from utils.saving_loading_models import load_model
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from torch.utils.tensorboard import SummaryWriter
 
 
+def evaluate(model, test_loader, feature_extractor=False):
 
-def evaluate(model, test_loader):
+    if feature_extractor:
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, 10)
+
+        load_model('./trained_models', model, feature_extractor_mode=True)
+    else:
+        load_model('./trained_models', model)
     model.eval()
     y_true = []
     y_pred = []
@@ -45,7 +54,6 @@ if __name__ == "__main__":
     # model = ImprovedCNN()
     model = models.resnet18()
 
-
     # Create a SummaryWriter to use TensorBoard
     writer = SummaryWriter('logs')
     # Add the model graph to TensorBoard
@@ -55,9 +63,5 @@ if __name__ == "__main__":
     writer.flush()
     writer.close()
 
-    model_name = model.__class__.__name__
-    save_directory = './trained_models'
-
-    model.load_state_dict(torch.load(os.path.join(save_directory, f"{model_name}_model.pth")))
     _, test_loader = get_data_loaders()
-    evaluate(model, test_loader)
+    evaluate(model, test_loader, feature_extractor=False)

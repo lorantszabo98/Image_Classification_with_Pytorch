@@ -1,15 +1,22 @@
 import torch
 import time
 import torchvision.models as models
+from torch import nn
 from torchvision import transforms
 from PIL import Image
 from created_models.simple_cnn_model import SimpleCNN, SimpleCNN_v2, ImprovedCNN
+from utils.saving_loading_models import load_model
 
 
-def inference(model, test_image, class_labels):
+def inference(model, test_image, class_labels, feature_extractor=False):
     # load the model's state dictionary and set the model to evaluation mode
-    model_name = model.__class__.__name__
-    model.load_state_dict(torch.load(f"trained_models/{model_name}_model.pth"))
+    if feature_extractor:
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, 10)
+
+        load_model('./trained_models', model, feature_extractor_mode=True)
+    else:
+        load_model('./trained_models', model)
     model.eval()
 
     # Define the transformation to apply to the test image
@@ -57,10 +64,10 @@ if __name__ == "__main__":
     ]
 
     # Specify the path to the test image
-    image_path = 'test_images/automoible_002.jpg'
+    image_path = 'test_images/automoible_004.jpg'
 
     start_time = time.time()
-    predicted_label, probabilities_percentage = inference(model, image_path, class_labels)
+    predicted_label, probabilities_percentage = inference(model, image_path, class_labels, feature_extractor=False)
     end_time = time.time()
     elapsed_time_ms = (end_time - start_time) * 1000
 

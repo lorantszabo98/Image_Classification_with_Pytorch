@@ -1,14 +1,17 @@
 import os
 import torch
 import torch.optim as optim
+from torch import nn
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from created_models.simple_cnn_model import SimpleCNN, SimpleCNN_v2, ImprovedCNN
 from utils.data_loader import get_data_loaders
+from   utils.saving_loading_models import save_model
 import torchvision.models as models
 
 
-def plot_and_save_training_results(epochs, train_accuracies, train_losses, model_name, num_epochs):
+
+def plot_and_save_training_results(epochs, train_accuracies, train_losses, model_name, num_epochs, feature_extractor=False):
     plt.figure(figsize=(10, 5))
     plt.plot(epochs, train_accuracies, label='Training Accuracy')
     plt.plot(epochs, train_losses, label='Training Loss')
@@ -19,7 +22,10 @@ def plot_and_save_training_results(epochs, train_accuracies, train_losses, model
 
     save_directory = './training_graphs'
     os.makedirs(save_directory, exist_ok=True)
-    save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}.png")
+    if feature_extractor:
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_feature_extractor.png")
+    else:
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_fine_tuned.png")
 
     plt.savefig(save_path)
     plt.close()
@@ -27,10 +33,21 @@ def plot_and_save_training_results(epochs, train_accuracies, train_losses, model
     print(f"Training graph saved to {save_path}")
 
 
-def train(model, train_loader, num_epochs=5):
+def train(model, train_loader, num_epochs=5, feature_extractor_mode=False):
     # define criterion and optimizer for training
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    # if we use a model in feature extractor mode, we freeze every parameter
+    # then we add a new layer and only this layer will be trained
+    if feature_extractor_mode:
+        for param in model.parameters():
+            param.requires_grad = False
+
+        num_ftrs = model.fc.in_features
+        model.fc = nn.Linear(num_ftrs, 10)
+
+        optimizer = optim.SGD(model.fc.parameters(), lr=0.001, momentum=0.9)
+    else:
+        optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
 
     train_accuracies = []
     train_losses = []
@@ -76,25 +93,25 @@ def train(model, train_loader, num_epochs=5):
 
     model_name = model.__class__.__name__
     # Call the plotting function
-    plot_and_save_training_results(range(1, num_epochs + 1), train_accuracies, train_losses, model_name, num_epochs)
+    plot_and_save_training_results(range(1, num_epochs + 1), train_accuracies, train_losses, model_name, num_epochs, feature_extractor=feature_extractor_mode)
+
+    # saving the model
+    save_model('./trained_models', model, feature_extractor_mode=feature_extractor_mode)
+
 
 if __name__ == "__main__":
     # model = SimpleCNN()
     # model = SimpleCNN_v2()
     # model = ImprovedCNN()
-    model = models.resnet18()
+    # model = models.resnet18()
+
+    # Feature extractor
+    model = models.resnet18(weights='IMAGENET1K_V1')
+
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, 10)
 
     train_loader, _ = get_data_loaders()
-    train(model, train_loader, num_epochs=10)
-
-    # create the saving directory
-    save_directory = './trained_models'
-    os.makedirs(save_directory, exist_ok=True)
-    # get the model name for saving
-    model_name = model.__class__.__name__
-
-    # save the model
-    # the state dictionary includes the learned parameters of the model
-    torch.save(model.state_dict(), os.path.join(save_directory, f"{model_name}_model.pth"))
+    train(model, train_loader, num_epochs=10, feature_extractor_mode=False)
 
 
