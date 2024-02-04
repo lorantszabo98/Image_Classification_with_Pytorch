@@ -9,6 +9,8 @@ from utils.data_loader import get_data_loaders
 from   utils.saving_loading_models import save_model
 import torchvision.models as models
 import torch.backends.cudnn as cudnn
+from torch.optim.lr_scheduler import StepLR
+
 
 cudnn.benchmark = True
 
@@ -38,28 +40,46 @@ def plot_and_save_training_results(epochs, train_accuracies, train_losses, model
 
 
 def train(model, train_loader, num_epochs=5, mode='default'):
+
     # define criterion and optimizer for training
     criterion = torch.nn.CrossEntropyLoss()
+    allowed_modes = {'default', 'fine_tuning', 'feature_extractor'}
     # if we use a model in feature extractor mode, we freeze every parameter
     # then we add a new layer and only this layer will be trained
     if mode == "feature_extractor":
         for param in model.parameters():
             param.requires_grad = False
 
+        for param in model.layer3.parameters():
+            param.requires_grad = True
+
+        # for param in model.layer4.parameters():
+        #     param.requires_grad = True
+
         num_ftrs = model.fc.in_features
         model.fc = nn.Linear(num_ftrs, 10)
 
-        optimizer = optim.SGD(model.fc.parameters(), lr=0.001, momentum=0.9)
+        optimizer = optim.SGD([
+            {'params': model.fc.parameters()},
+            {'params': model.layer3.parameters(), 'lr': 0.001}
+            # {'params': model.layer4.parameters(), 'lr': 0.001}
+        ], lr=0.001, momentum=0.9)
+
+        # optimizer = optim.SGD(model.fc.parameters(), lr=0.001, momentum=0.9)
     elif mode == "fine_tuning":
         num_ftrs = model.fc.in_features
         model.fc = nn.Linear(num_ftrs, 10)
 
         optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
-    else:
+    elif mode == "default":
         optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    else:
+        raise ValueError(f"Invalid mode. Supported values are: {', '.join(allowed_modes)}")
 
     train_accuracies = []
     train_losses = []
+
+    # scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
 
     # we iterate for the specified number of epochs
     for epoch in tqdm(range(num_epochs), desc="Epochs", unit="epoch"):
@@ -98,6 +118,8 @@ def train(model, train_loader, num_epochs=5, mode='default'):
         epoch_loss = running_loss / len(train_loader)
         print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.3f}, Accuracy: {accuracy_train * 100:.2f}%")
 
+        # scheduler.step()
+
     print('Finished Training')
 
     model_name = model.__class__.__name__
@@ -116,6 +138,7 @@ if __name__ == "__main__":
 
     # Feature extractor
     model = models.resnet18(weights='IMAGENET1K_V1')
+    # model = models.resnet34(weights='IMAGENET1K_V1')
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
