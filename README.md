@@ -37,3 +37,15 @@ For inference:
 python inference.py
 ```
 
+## Trained Models
+
+| Model        |        Mode         |  Epoch  |  Val accuracy(%)  |
+| ------------ |:-------------------:|:-------:|:-----------------:|
+| SimpleCNN    |       default       |   10    |       60.45       |
+| SimpleCNN_v2 |       default       |   10    |      62\. 58      |
+| ImprovedCNN  |       default       |   10    |       77.26       |
+| ResNet18     |       default       |   10    |       63.83       |
+| ResNet18     |     fine tuned      |   10    |       80.80       |
+| ResNet18     |  feature_extractor  |   10    |       77.27       |
+| ResNet18     |  feature_extractor  |   15    |       76.58       |
+
