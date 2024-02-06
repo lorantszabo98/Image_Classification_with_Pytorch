@@ -39,13 +39,23 @@ python inference.py
 
 ## Trained Models
 
-| Model        |        Mode         |  Epoch  |  Val accuracy(%)  |
-| ------------ |:-------------------:|:-------:|:-----------------:|
-| SimpleCNN    |       default       |   10    |       60.45       |
-| SimpleCNN_v2 |       default       |   10    |      62\. 58      |
-| ImprovedCNN  |       default       |   10    |       77.26       |
-| ResNet18     |       default       |   10    |       63.83       |
-| ResNet18     |     fine tuned      |   10    |       80.80       |
-| ResNet18     |  feature_extractor  |   10    |       77.27       |
-| ResNet18     |  feature_extractor  |   15    |       76.58       |
+The models I have trained can be found in the **trained_models** folder.
+
+_SimpleCNN_, _SimpleCNN_v2_ and _ImprovedCNN_ are my own models, trained from scratch on the CIFAR-10 dataset.
+
+I also tried ResNet18, the smallest model of the ResNet family. Here I also trained from scratch and fine tuned the model and used it as a feature extractor. In these cases I used the weights trained on ImageNet as a starting point.
+I also tried the ResNet34 model as a feature extractor.
+
+The results are shown in the table below:
+
+| Model        |        Mode         | Epoch | Val accuracy(%) |
+|--------------|:-------------------:|:-----:|:---------------:|
+| SimpleCNN    |       default       |  10   |      60.45      |
+| SimpleCNN_v2 |       default       |  10   |      62.58      |
+| ImprovedCNN  |       default       |  10   |      77.26      |
+| ResNet18     |       default       |  10   |      63.83      |
+| ResNet18     |     fine tuned      |  10   |      80.80      |
+| ResNet18     |  feature_extractor  |  10   |      77.27      |
+| ResNet18     |  feature_extractor  |  15   |      76.58      |
+| ResNet34     |  feature_extractor  |  10   |      78.01      |
 
