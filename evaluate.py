@@ -10,6 +10,7 @@ from utils.data_loader import get_data_loaders
 from utils.saving_loading_models import load_model
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from torch.utils.tensorboard import SummaryWriter
+from torchinfo import summary
 
 
 def display_random_predictions(model, test_loader, class_labels, num_images=8, mode='default'):
@@ -108,6 +109,13 @@ def evaluate(model, test_loader, mode='default'):
     total_params = sum(p.numel() for p in model.parameters())
     print(f"Total number of parameters: {total_params}")
 
+    summary(model=model,
+            input_size=(64, 3, 32, 32),  # (batch_size, color_channels, height, width)
+            col_names=["input_size", "output_size", "num_params"],
+            col_width=20,
+            row_settings=["var_names"]
+    )
+
     # print out the model structure
     # print(model.eval())
 
@@ -116,6 +124,7 @@ if __name__ == "__main__":
     # model = SimpleCNN_v2()
     # model = ImprovedCNN()
     model = models.resnet18()
+    # model = models.resnet34()
 
     class_labels = [
         'airplane', 'automobile', 'bird', 'cat', 'deer',
@@ -132,5 +141,5 @@ if __name__ == "__main__":
     writer.close()
 
     _, test_loader = get_data_loaders(statistics=False)
-    # evaluate(model, test_loader, mode="feature_extractor")
-    display_random_predictions(model, test_loader, class_labels)
+    evaluate(model, test_loader, mode="feature_extractor")
+    # display_random_predictions(model, test_loader, class_labels)
