@@ -1,14 +1,16 @@
 # Image Classification with PyTorch
 
-This project is an example implementation of an image classification task using PyTorch. It includes 3 simple convolutional neural network (CNN) model trained on the CIFAR-10 dataset.
+This project is an example implementation of an image classification task using PyTorch. It includes convolutional neural network (CNN) models trained on the CIFAR-10 dataset.
+It also includes fine-tuned ResNet18 and ResNet34 models and models used as feature extractor on the CIFAR-10 dataset.
 
 ## Overview
 
-This project demonstrates how to build, train, and evaluate a simple CNN for image classification using PyTorch. The trained model is capable of classifying images into one of the ten classes in the CIFAR-10 dataset.
+This project demonstrates how to build, train, fine-tune, and evaluate  simple CNNs for image classification using PyTorch. The trained models are capable of classifying images into one of the ten classes in the CIFAR-10 dataset.
 
 ## Features
 
-- Implementation of 3 simple CNN model
+- Implementation of 3 simple CNN model from scratch
+- Transfer learning with ResNet18 and ResNet34
 - Training and evaluation scripts
 - Basic visualization of training progress
 - Save and load trained models
