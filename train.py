@@ -39,7 +39,36 @@ def plot_and_save_training_results(epochs, train_accuracies, train_losses, model
     print(f"Training graph saved to {save_path}")
 
 
-def train(model, train_loader, num_epochs=5, mode='default'):
+def train_val_step(dataloader, model, loss_function, optimizer):
+    if optimizer is not None:
+        model.train()
+    else:
+        model.eval()
+
+    running_loss = 0
+    correct = 0
+    total = 0
+
+    for data in dataloader:
+        image, labels = data
+        outputs = model(image)
+        loss = loss_function(outputs, labels)
+        _, predicted = torch.max(outputs.data, 1)
+        total += labels.size(0)
+        correct += (predicted == labels).sum().item()
+        if optimizer is not None:
+            optimizer.zero_grad()
+            # perform backpropagation
+            loss.backward()
+            # update the model parameters
+            optimizer.step()
+
+        running_loss += loss.item()
+
+    return running_loss / len(dataloader.dataset), correct / total
+
+
+def train(model, train_loader, val_loader, num_epochs=5, mode='default'):
 
     # define criterion and optimizer for training
     criterion = torch.nn.CrossEntropyLoss()
@@ -76,75 +105,111 @@ def train(model, train_loader, num_epochs=5, mode='default'):
     else:
         raise ValueError(f"Invalid mode. Supported values are: {', '.join(allowed_modes)}")
 
-    train_accuracies = []
-    train_losses = []
+    # train_accuracies = []
+    # train_losses = []
+    accuracy_tracking = {'train': [], 'val': []}
+    loss_tracking = {'train': [], 'val': []}
+    best_loss = float('inf')
 
     # scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
 
     # we iterate for the specified number of epochs
     for epoch in tqdm(range(num_epochs), desc="Epochs", unit="epoch"):
-        model.train()
-        running_loss = 0.0
-        correct_train = 0
-        total_train = 0
-
+        # model.train()
         # running_loss = 0.0
-        for i, data in enumerate(train_loader, 0):
-            # unpack data obtained from a data loader, which is a tuple
-            # the first element is the input data and the second element is the corresponding labels
-            inputs, labels = data
-            # zero the gradients
-            optimizer.zero_grad()
-            # calculate the predictions
-            outputs = model(inputs)
-            # compute the loss
-            loss = criterion(outputs, labels)
-            # perform backpropagation
-            loss.backward()
-            # update the model parameters
-            optimizer.step()
+        # correct_train = 0
+        # total_train = 0
+        training_loss, training_accuracy = train_val_step(train_loader, model, criterion, optimizer)
+        loss_tracking['train'].append(training_loss)
+        accuracy_tracking['train'].append(training_accuracy)
 
-            running_loss += loss.item()
-            _, predicted = torch.max(outputs.data, 1)
-            total_train += labels.size(0)
-            correct_train += (predicted == labels).sum().item()
+        with torch.inference_mode():
+            val_loss, val_accuracy = train_val_step(val_loader, model, criterion, None)
+            loss_tracking['val'].append(val_loss)
+            accuracy_tracking['val'].append(val_accuracy)
+            if val_loss < best_loss:
+                print('Saving best model')
+                torch.save(model.state_dict(), 'best_model.pt')
+                best_loss = val_loss
 
-        epoch_loss = running_loss / len(train_loader)
-        accuracy_train = correct_train / total_train
+        print(f'Training accuracy: {training_accuracy:.6}')
+        print(f'Validation accuracy: {val_accuracy:.6}')
+        print(f'Training loss: {training_loss:.6}')
+        print(f'Validation loss: {val_loss:.6}')
 
-        train_accuracies.append(accuracy_train)
-        train_losses.append(epoch_loss)
+    plt.plot(range(1, num_epochs + 1), loss_tracking['train'], label='train')
+    plt.plot(range(1, num_epochs + 1), loss_tracking['val'], label='validation')
+    plt.xlabel('epoch')
+    plt.ylabel('loss')
+    plt.legend()
 
-        epoch_loss = running_loss / len(train_loader)
-        print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.3f}, Accuracy: {accuracy_train * 100:.2f}%")
+    plt.show()
+
+    plt.plot(range(1, num_epochs + 1), accuracy_tracking['train'], label='train')
+    plt.plot(range(1, num_epochs + 1), accuracy_tracking['val'], label='validation')
+    plt.xlabel('epoch')
+    plt.ylabel('accuracy')
+    plt.legend()
+
+    plt.show()
+
+        # # running_loss = 0.0
+        # for i, data in enumerate(train_loader, 0):
+        #     # unpack data obtained from a data loader, which is a tuple
+        #     # the first element is the input data and the second element is the corresponding labels
+        #     inputs, labels = data
+        #     # zero the gradients
+        #     optimizer.zero_grad()
+        #     # calculate the predictions
+        #     outputs = model(inputs)
+        #     # compute the loss
+        #     loss = criterion(outputs, labels)
+        #     # perform backpropagation
+        #     loss.backward()
+        #     # update the model parameters
+        #     optimizer.step()
+        #
+        #     running_loss += loss.item()
+        #     _, predicted = torch.max(outputs.data, 1)
+        #     total_train += labels.size(0)
+        #     correct_train += (predicted == labels).sum().item()
+        #
+        # epoch_loss = running_loss / len(train_loader)
+        # accuracy_train = correct_train / total_train
+        #
+        # train_accuracies.append(accuracy_train)
+        # train_losses.append(epoch_loss)
+
+        # epoch_loss = running_loss / len(train_loader)
+        # print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.3f}, Accuracy: {accuracy_train * 100:.2f}%")
 
         # scheduler.step()
 
-    print('Finished Training')
-
-    model_name = model.__class__.__name__
-    # Call the plotting function
-    plot_and_save_training_results(range(1, num_epochs + 1), train_accuracies, train_losses, model_name, num_epochs, mode=mode)
-
-    # saving the model
-    save_model('./trained_models', model, mode=mode)
+    # print('Finished Training')
+    #
+    # model_name = model.__class__.__name__
+    # # Call the plotting function
+    # plot_and_save_training_results(range(1, num_epochs + 1), train_accuracies, train_losses, model_name, num_epochs, mode=mode)
+    #
+    # # saving the model
+    # save_model('./trained_models', model, mode=mode)
 
 
 if __name__ == "__main__":
-    # model = SimpleCNN()
+    model = SimpleCNN()
     # model = SimpleCNN_v2()
     # model = ImprovedCNN()
     # model = models.resnet18()
 
     # Feature extractor
-    model = models.resnet18(weights='IMAGENET1K_V1')
+    # model = models.resnet18(weights='IMAGENET1K_V1')
     # model = models.resnet34(weights='IMAGENET1K_V1')
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
     model = model.to(device)
 
-    train_loader, _ = get_data_loaders()
-    train(model, train_loader, num_epochs=10, mode='feature_extractor')
+    train_loader, val_loader = get_data_loaders()
+    train(model, train_loader, val_loader, num_epochs=5)
 
 
