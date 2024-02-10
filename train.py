@@ -15,23 +15,24 @@ from torch.optim.lr_scheduler import StepLR
 cudnn.benchmark = True
 
 
-def plot_and_save_training_results(epochs, train_accuracies, train_losses, model_name, num_epochs, mode='default'):
-    plt.figure(figsize=(10, 5))
-    plt.plot(epochs, train_accuracies, label='Training Accuracy')
-    plt.plot(epochs, train_losses, label='Training Loss')
-    plt.title('Training Accuracy and Loss')
-    plt.xlabel('Epoch')
-    plt.ylabel('Value')
+def plot_and_save_training_results(data, label, model, num_epochs, mode='default'):
+    plt.plot(range(1, num_epochs + 1), data['train'], label='train')
+    plt.plot(range(1, num_epochs + 1), data['val'], label='validation')
+    plt.title(f'Training and validation {label}')
+    plt.xlabel('epoch')
+    plt.ylabel(label)
     plt.legend()
+
+    model_name = model.__class__.__name__
 
     save_directory = './training_graphs'
     os.makedirs(save_directory, exist_ok=True)
     if mode == "feature_extractor":
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_feature_extractor.png")
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_feature_extractor_{label}.png")
     elif mode == "fine_tuning":
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_fine_tuned.png")
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_fine_tuned_{label}.png")
     else:
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}.png")
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_{label}.png")
 
     plt.savefig(save_path)
     plt.close()
@@ -129,29 +130,16 @@ def train(model, train_loader, val_loader, num_epochs=5, mode='default'):
             accuracy_tracking['val'].append(val_accuracy)
             if val_loss < best_loss:
                 print('Saving best model')
-                torch.save(model.state_dict(), 'best_model.pt')
+                save_model('./trained_models', model, mode=mode)
                 best_loss = val_loss
 
-        print(f'Training accuracy: {training_accuracy:.6}')
-        print(f'Validation accuracy: {val_accuracy:.6}')
-        print(f'Training loss: {training_loss:.6}')
-        print(f'Validation loss: {val_loss:.6}')
+        print(f'Training accuracy: {training_accuracy:.6}, Validation accuracy: {val_accuracy:.6}')
+        print(f'Training loss: {training_loss:.6}, Validation loss: {val_loss:.6}')
 
-    plt.plot(range(1, num_epochs + 1), loss_tracking['train'], label='train')
-    plt.plot(range(1, num_epochs + 1), loss_tracking['val'], label='validation')
-    plt.xlabel('epoch')
-    plt.ylabel('loss')
-    plt.legend()
+    print('\nFinished Training\n')
 
-    plt.show()
-
-    plt.plot(range(1, num_epochs + 1), accuracy_tracking['train'], label='train')
-    plt.plot(range(1, num_epochs + 1), accuracy_tracking['val'], label='validation')
-    plt.xlabel('epoch')
-    plt.ylabel('accuracy')
-    plt.legend()
-
-    plt.show()
+    plot_and_save_training_results(loss_tracking, 'loss', model, num_epochs, mode=mode)
+    plot_and_save_training_results(accuracy_tracking, 'accuracy', model, num_epochs, mode=mode)
 
         # # running_loss = 0.0
         # for i, data in enumerate(train_loader, 0):
@@ -210,6 +198,6 @@ if __name__ == "__main__":
     model = model.to(device)
 
     train_loader, val_loader = get_data_loaders()
-    train(model, train_loader, val_loader, num_epochs=5)
+    train(model, train_loader, val_loader, num_epochs=3)
 
 
