@@ -12,9 +12,6 @@ import torch.backends.cudnn as cudnn
 # from torch.optim.lr_scheduler import StepLR
 
 
-cudnn.benchmark = True
-
-
 def plot_and_save_training_results(data, label, num_epochs, save_path):
     plt.plot(range(1, num_epochs + 1), data['train'], label='train')
     plt.plot(range(1, num_epochs + 1), data['val'], label='validation')
@@ -60,6 +57,9 @@ def train_val_step(dataloader, model, loss_function, optimizer):
 
 def train(model, train_loader, val_loader, num_epochs=5, mode='default'):
 
+    save_directory = './training_graphs_and_logs'
+    model_name = model.__class__.__name__
+
     # define criterion and optimizer for training
     criterion = torch.nn.CrossEntropyLoss()
     allowed_modes = {'default', 'fine_tuning', 'feature_extractor'}
@@ -84,31 +84,38 @@ def train(model, train_loader, val_loader, num_epochs=5, mode='default'):
             # {'params': model.layer4.parameters(), 'lr': 0.001}
         ], lr=0.001, momentum=0.9)
 
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_feature_extractor")
+
         # optimizer = optim.SGD(model.fc.parameters(), lr=0.001, momentum=0.9)
     elif mode == "fine_tuning":
         num_ftrs = model.fc.in_features
         model.fc = nn.Linear(num_ftrs, 10)
 
         optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_fine_tuning")
+
     elif mode == "default":
         optimizer = optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}")
+
     else:
         raise ValueError(f"Invalid mode. Supported values are: {', '.join(allowed_modes)}")
 
-    # train_accuracies = []
-    # train_losses = []
     accuracy_tracking = {'train': [], 'val': []}
     loss_tracking = {'train': [], 'val': []}
     best_loss = float('inf')
+
+    os.makedirs(save_path, exist_ok=True)
+
+    log_file_path = os.path.join(save_path, 'log.txt')
+    log_file = open(log_file_path, 'a')
 
     # scheduler = StepLR(optimizer, step_size=5, gamma=0.1)
 
     # we iterate for the specified number of epochs
     for epoch in tqdm(range(num_epochs), desc="Epochs", unit="epoch"):
-        # model.train()
-        # running_loss = 0.0
-        # correct_train = 0
-        # total_train = 0
         training_loss, training_accuracy = train_val_step(train_loader, model, criterion, optimizer)
         loss_tracking['train'].append(training_loss)
         accuracy_tracking['train'].append(training_accuracy)
@@ -125,63 +132,17 @@ def train(model, train_loader, val_loader, num_epochs=5, mode='default'):
         print(f'Training accuracy: {training_accuracy:.6}, Validation accuracy: {val_accuracy:.6}')
         print(f'Training loss: {training_loss:.6}, Validation loss: {val_loss:.6}')
 
+        # Append the information to the log file
+        log_file.write(f"Epoch {epoch + 1}: "
+                       f'Training accuracy: {training_accuracy:.6}, Validation accuracy: {val_accuracy:.6}, '
+                       f'Training loss: {training_loss:.6}, Validation loss: {val_loss:.6}\n')
+
     print('\nFinished Training\n')
-
-    model_name = model.__class__.__name__
-
-    save_directory = './training_graphs'
-    if mode == "feature_extractor":
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_feature_extractor")
-    elif mode == "fine_tuning":
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_fine_tuning")
-    else:
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}")
-
-    os.makedirs(save_path, exist_ok=True)
 
     plot_and_save_training_results(loss_tracking, 'loss', num_epochs, save_path)
     plot_and_save_training_results(accuracy_tracking, 'accuracy', num_epochs, save_path)
 
-        # # running_loss = 0.0
-        # for i, data in enumerate(train_loader, 0):
-        #     # unpack data obtained from a data loader, which is a tuple
-        #     # the first element is the input data and the second element is the corresponding labels
-        #     inputs, labels = data
-        #     # zero the gradients
-        #     optimizer.zero_grad()
-        #     # calculate the predictions
-        #     outputs = model(inputs)
-        #     # compute the loss
-        #     loss = criterion(outputs, labels)
-        #     # perform backpropagation
-        #     loss.backward()
-        #     # update the model parameters
-        #     optimizer.step()
-        #
-        #     running_loss += loss.item()
-        #     _, predicted = torch.max(outputs.data, 1)
-        #     total_train += labels.size(0)
-        #     correct_train += (predicted == labels).sum().item()
-        #
-        # epoch_loss = running_loss / len(train_loader)
-        # accuracy_train = correct_train / total_train
-        #
-        # train_accuracies.append(accuracy_train)
-        # train_losses.append(epoch_loss)
-
-        # epoch_loss = running_loss / len(train_loader)
-        # print(f"Epoch {epoch + 1}/{num_epochs}, Loss: {epoch_loss:.3f}, Accuracy: {accuracy_train * 100:.2f}%")
-
-        # scheduler.step()
-
-    # print('Finished Training')
-    #
-    # model_name = model.__class__.__name__
-    # # Call the plotting function
-    # plot_and_save_training_results(range(1, num_epochs + 1), train_accuracies, train_losses, model_name, num_epochs, mode=mode)
-    #
-    # # saving the model
-    # save_model('./trained_models', model, mode=mode)
+    log_file.close()
 
 
 if __name__ == "__main__":
