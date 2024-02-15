@@ -6,16 +6,16 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from created_models.simple_cnn_model import SimpleCNN, SimpleCNN_v2, ImprovedCNN
 from utils.data_loader import get_data_loaders
-from   utils.saving_loading_models import save_model
+from utils.saving_loading_models import save_model
 import torchvision.models as models
 import torch.backends.cudnn as cudnn
-from torch.optim.lr_scheduler import StepLR
+# from torch.optim.lr_scheduler import StepLR
 
 
 cudnn.benchmark = True
 
 
-def plot_and_save_training_results(data, label, model, num_epochs, mode='default'):
+def plot_and_save_training_results(data, label, num_epochs, save_path):
     plt.plot(range(1, num_epochs + 1), data['train'], label='train')
     plt.plot(range(1, num_epochs + 1), data['val'], label='validation')
     plt.title(f'Training and validation {label}')
@@ -23,18 +23,7 @@ def plot_and_save_training_results(data, label, model, num_epochs, mode='default
     plt.ylabel(label)
     plt.legend()
 
-    model_name = model.__class__.__name__
-
-    save_directory = './training_graphs'
-    os.makedirs(save_directory, exist_ok=True)
-    if mode == "feature_extractor":
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_feature_extractor_{label}.png")
-    elif mode == "fine_tuning":
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_fine_tuned_{label}.png")
-    else:
-        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_{label}.png")
-
-    plt.savefig(save_path)
+    plt.savefig(os.path.join(save_path, f"{label}.png"))
     plt.close()
 
     print(f"Training graph saved to {save_path}")
@@ -138,8 +127,20 @@ def train(model, train_loader, val_loader, num_epochs=5, mode='default'):
 
     print('\nFinished Training\n')
 
-    plot_and_save_training_results(loss_tracking, 'loss', model, num_epochs, mode=mode)
-    plot_and_save_training_results(accuracy_tracking, 'accuracy', model, num_epochs, mode=mode)
+    model_name = model.__class__.__name__
+
+    save_directory = './training_graphs'
+    if mode == "feature_extractor":
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_feature_extractor")
+    elif mode == "fine_tuning":
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}_fine_tuning")
+    else:
+        save_path = os.path.join(save_directory, f"{model_name}_epochs_{num_epochs}")
+
+    os.makedirs(save_path, exist_ok=True)
+
+    plot_and_save_training_results(loss_tracking, 'loss', num_epochs, save_path)
+    plot_and_save_training_results(accuracy_tracking, 'accuracy', num_epochs, save_path)
 
         # # running_loss = 0.0
         # for i, data in enumerate(train_loader, 0):
