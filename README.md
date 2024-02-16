@@ -50,14 +50,14 @@ I also tried the ResNet34 model as a feature extractor.
 
 The results are shown in the table below:
 
-| Model        |        Mode         | Epoch | Val accuracy(%) |
-|--------------|:-------------------:|:-----:|:---------------:|
-| SimpleCNN    |       default       |  10   |      60.45      |
-| SimpleCNN_v2 |       default       |  10   |      62.58      |
-| ImprovedCNN  |       default       |  10   |      77.26      |
-| ResNet18     |       default       |  10   |      63.83      |
-| ResNet18     |     fine tuned      |  10   |      80.80      |
-| ResNet18     |  feature_extractor  |  10   |      77.27      |
-| ResNet18     |  feature_extractor  |  15   |      76.58      |
-| ResNet34     |  feature_extractor  |  10   |      78.01      |
+| Model        |        Mode         | Epoch | Val accuracy(%) | Augmentation |
+|--------------|:-------------------:|:-----:|:---------------:|:------------:|
+| SimpleCNN    |       default       |  10   |      60.45      |      No      |
+| SimpleCNN_v2 |       default       |  10   |      62.58      |      No      |
+| ImprovedCNN  |       default       |  10   |      77.26      |      No      |
+| ResNet18     |       default       |  10   |      63.83      |      No      |
+| ResNet18     |     fine tuned      |  10   |      80.80      |      No      |
+| ResNet18     |  feature_extractor  |  10   |      77.27      |      No      |
+| ResNet18     |  feature_extractor  |  15   |      76.58      |      No      |
+| ResNet34     |  feature_extractor  |  10   |      78.01      |      No      |
 
