@@ -11,6 +11,8 @@ from utils.saving_loading_models import load_model
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from torch.utils.tensorboard import SummaryWriter
 from torchinfo import summary
+from sklearn.metrics import confusion_matrix, classification_report
+import seaborn as sns
 
 
 def display_random_predictions(model, test_loader, class_labels, num_images=8, mode='default'):
@@ -119,6 +121,8 @@ def evaluate(model, test_loader, mode='default'):
     # print out the model structure
     # print(model.eval())
 
+    return y_true, y_pred
+
 if __name__ == "__main__":
     # model = SimpleCNN()
     # model = SimpleCNN_v2()
@@ -131,15 +135,23 @@ if __name__ == "__main__":
         'dog', 'frog', 'horse', 'ship', 'truck'
     ]
 
-    # Create a SummaryWriter to use TensorBoard
-    writer = SummaryWriter('logs')
-    # Add the model graph to TensorBoard
-    dummy_input = torch.randn(1, 3, 32, 32)
-    writer.add_graph(model, dummy_input)
-    # Close the SummaryWriter
-    writer.flush()
-    writer.close()
-
     _, test_loader = get_data_loaders(statistics=False)
-    evaluate(model, test_loader, mode="feature_extractor")
+    true_labels, predictions = evaluate(model, test_loader, mode="fine_tuning")
+
+    # Create classification report
+    report = classification_report(true_labels, predictions)
+    print('Classification Report:')
+    print(report)
+
+    # Create the confusion matrix
+    cm = confusion_matrix(true_labels, predictions)
+    # Plot the confusion matrix using seaborn
+    plt.figure(figsize=(8, 6))
+    sns.heatmap(cm, annot=True, fmt='d', cmap='Greens', xticklabels=class_labels, yticklabels=class_labels)
+    plt.title('Confusion Matrix')
+    plt.xlabel('Predicted Labels')
+    plt.ylabel('True Labels')
+    plt.show()
+
+    # Display the 8 random predictions from the testing dataset
     # display_random_predictions(model, test_loader, class_labels)
